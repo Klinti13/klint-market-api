@@ -6,7 +6,13 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     isAdmin: { type: Boolean, required: true, default: false },
-    points: { type: Number, default: 0 } // KJO SHTOHET: Ruajtja e pikëve
+    points: { type: Number, default: 0 },
+    
+    // 👇 SHTUAR TANI PËR SISTEMIN AUTOFILL TË ADRESËS
+    address: { type: String, default: '' },
+    city: { type: String, default: 'Elbasan' },
+    phone: { type: String, default: '' }
+
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
