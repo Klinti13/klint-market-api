@@ -1,10 +1,11 @@
 import express from 'express';
 import Product from '../models/Product.js';
+import { protect, admin } from '../middleware/authMiddleware.js'; // <-- ROJET E SIGURISË
 
 const router = express.Router();
 
-// 1. POST për 1 produkt
-router.post('/', async (req, res) => {
+// 1. POST për 1 produkt (E Mbrojtur: Vetëm për ty si Admin)
+router.post('/', protect, admin, async (req, res) => {
     try {
         const newProduct = new Product(req.body);
         const savedProduct = await newProduct.save();
@@ -14,7 +15,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// 2. GET për të gjitha produktet
+// 2. GET për të gjitha produktet (E Hapur: Klientët duhet t'i shohin produktet)
 router.get('/', async (req, res) => {
     try {
         const products = await Product.find();
@@ -24,8 +25,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// 3. POST për SEED (Shumë produkte)
-router.post('/seed', async (req, res) => {
+// 3. POST për SEED (E Mbrojtur: Vetëm Admini mund të fusë shumë produkte njëherësh)
+router.post('/seed', protect, admin, async (req, res) => {
     try {
         const savedProducts = await Product.insertMany(req.body);
         res.status(201).json({ message: "Produktet u shtuan me sukses!", count: savedProducts.length });
@@ -34,4 +35,4 @@ router.post('/seed', async (req, res) => {
     }
 });
 
-export default router; // <-- Ky rresht duhet të jetë FIKS në fund fare
+export default router; // <-- Fiks në fund fare
