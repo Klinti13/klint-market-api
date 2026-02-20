@@ -1,7 +1,7 @@
 import express from 'express';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
-import { protect, admin } from '../middleware/authMiddleware.js'; // SHTUAR: admin middleware
+import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -51,15 +51,18 @@ router.get('/myorders', protect, async (req, res) => {
     res.json(orders);
 });
 
-// --- RRUGËT E REJA PËR ADMIN ---
+// --- RRUGËT PËR ADMIN ---
 
 // @desc    Merr të gjitha porositë
 // @route   GET /api/orders
-// @access  Private/Admin (Ti si Pronar)
+// @access  Private/Admin
 router.get('/', protect, admin, async (req, res) => {
-    // Përdorim .populate që të shohim edhe emrin e klientit që ka bërë porosinë
-    const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
-    res.json(orders);
+    try {
+        const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 // @desc    Përditëso statusin e porosisë (Pending -> Shipped -> Delivered)
@@ -72,13 +75,30 @@ router.put('/:id/status', protect, admin, async (req, res) => {
         if (order) {
             order.status = req.body.status || order.status;
             
-            // Opsionale: nëse statusi bëhet Delivered, mund të shënojmë që është paguar
-            if (order.status === 'Delivered') {
+            if (order.status === 'Delivered' || order.status === 'Paguar') {
                 order.isPaid = true;
             }
 
             const updatedOrder = await order.save();
             res.json(updatedOrder);
+        } else {
+            res.status(404).json({ message: 'Porosia nuk u gjet' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Fshi një porosi
+// @route   DELETE /api/orders/:id
+// @access  Private/Admin
+router.delete('/:id', protect, admin, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (order) {
+            await order.deleteOne(); // Fshin porosinë nga databaza përfundimisht
+            res.json({ message: 'Porosia u fshi me sukses 🗑️' });
         } else {
             res.status(404).json({ message: 'Porosia nuk u gjet' });
         }
