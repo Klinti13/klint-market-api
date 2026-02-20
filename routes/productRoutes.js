@@ -1,13 +1,24 @@
 import express from 'express';
 import Product from '../models/Product.js';
-import { protect, admin } from '../middleware/authMiddleware.js'; // <-- ROJET E SIGURISË
+import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// 1. POST për 1 produkt (E Mbrojtur: Vetëm për ty si Admin)
+// 1. POST për 1 produkt nga Admini
 router.post('/', protect, admin, async (req, res) => {
     try {
-        const newProduct = new Product(req.body);
+        const { name, price, oldPrice, description, image, category, badge } = req.body;
+
+        const newProduct = new Product({
+            name,
+            price,
+            oldPrice: oldPrice || null,
+            description: description || 'Produkte cilësore nga KLINT.',
+            imageUrl: image, // React dërgon 'image', ne e ruajmë si 'imageUrl'
+            category: category || 'Veshje',
+            badge: badge || ''
+        });
+
         const savedProduct = await newProduct.save();
         res.status(201).json(savedProduct);
     } catch (error) {
@@ -15,7 +26,7 @@ router.post('/', protect, admin, async (req, res) => {
     }
 });
 
-// 2. GET për të gjitha produktet (E Hapur: Klientët duhet t'i shohin produktet)
+// 2. GET për të gjitha produktet
 router.get('/', async (req, res) => {
     try {
         const products = await Product.find();
@@ -25,7 +36,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-// 3. POST për SEED (E Mbrojtur: Vetëm Admini mund të fusë shumë produkte njëherësh)
+// 3. POST për SEED
 router.post('/seed', protect, admin, async (req, res) => {
     try {
         const savedProducts = await Product.insertMany(req.body);
@@ -35,4 +46,4 @@ router.post('/seed', protect, admin, async (req, res) => {
     }
 });
 
-export default router; // <-- Fiks në fund fare
+export default router;
