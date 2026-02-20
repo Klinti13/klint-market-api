@@ -10,10 +10,20 @@ const router = express.Router();
 // @access  Private (Klienti)
 router.post('/', protect, async (req, res) => {
     try {
-        const { orderItems, shippingAddress, totalPrice } = req.body;
+        // SHTUAM: useVipPoints vjen nga Frontend-i
+        const { orderItems, shippingAddress, totalPrice, useVipPoints } = req.body;
 
         if (orderItems && orderItems.length === 0) {
             return res.status(400).json({ message: 'Shporta është bosh' });
+        }
+
+        // SIGURIA: Marrim të dhënat e sakta të userit nga Databaza
+        const currentUser = await User.findById(req.user._id);
+        
+        let deductedPoints = 0;
+        // Nëse Frontendi thotë "Dua ulje VIP" dhe përdoruesi i ka vërtet 1000 pikë
+        if (useVipPoints && currentUser.points >= 1000) {
+            deductedPoints = 1000;
         }
 
         const order = new Order({
@@ -27,9 +37,12 @@ router.post('/', protect, async (req, res) => {
         const createdOrder = await order.save();
 
         const pointsEarned = Math.floor(totalPrice / 100);
+        
+        // PËRDITËSIMI MATEMATIK I PIKËVE
+        // Shtojmë pikët e reja nga blerja, dhe heqim ato 1000 (nëse e ka përdorur VIP-in)
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id, 
-            { $inc: { points: pointsEarned } },
+            { $inc: { points: pointsEarned - deductedPoints } },
             { new: true }
         );
 
@@ -77,8 +90,6 @@ router.put('/:id/status', protect, admin, async (req, res) => {
         if (order) {
             order.status = req.body.status || order.status;
             
-            // Kontrollojmë nëse statusi i ri tregon që porosia u krye.
-            // Ndryshuam kushtin që të përputhet me fjalët shqip.
             if (order.status === 'Porosia u dërgua') {
                 order.isPaid = true;
                 order.paidAt = Date.now(); 
