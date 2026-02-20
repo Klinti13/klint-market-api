@@ -1,14 +1,18 @@
 import path from 'path';
 import express from 'express';
 import multer from 'multer';
-import fs from 'fs'; // SHTUAR: Libraria që menaxhon skedarët e serverit
+import fs from 'fs';
 
 const router = express.Router();
 
-// MAGJIA KËTU: Krijon folderin 'uploads' automatikisht në Render nëse nuk ekziston!
-const uploadDir = 'uploads/';
+// Përdorim rrugën ABSOLUTE që Render të mos ngatërrohet
+const __dirname = path.resolve();
+const uploadDir = path.join(__dirname, 'uploads');
+
+// Kontrollojmë dhe krijojmë folderin me rrugë absolute
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
+    console.log("✅ Folderi 'uploads' u krijua me sukses në:", uploadDir);
 }
 
 const storage = multer.diskStorage({
@@ -27,7 +31,7 @@ function checkFileType(file, cb) {
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb('Vetëm imazhe (JPG, PNG, WEBP)!');
+        cb('❌ Gabim: Lejohen vetëm imazhe (JPG, PNG, WEBP)!');
     }
 }
 
@@ -39,6 +43,9 @@ const upload = multer({
 });
 
 router.post('/', upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ message: "Asnjë foto nuk u ngarkua" });
+    }
     res.send(`/uploads/${req.file.filename}`);
 });
 
