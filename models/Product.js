@@ -7,7 +7,8 @@ const productSchema = new mongoose.Schema({
     description: { type: String, required: true },
     imageUrl: { type: String, required: true },
     category: { type: String, required: true },
-    badge: { type: String, required: false }
+    badge: { type: String, required: false },
+    isActive: { type: Boolean, default: true } // SHTUAR TANI PËR KONTROLLIN E STOKUT
 }, {
     timestamps: true
 });
