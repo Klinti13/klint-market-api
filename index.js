@@ -1,3 +1,4 @@
+import path from 'path'; // SHTUAR PËR FOTOT
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -5,6 +6,7 @@ import mongoose from 'mongoose';
 import productRoutes from './routes/productRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js'; // SHTUAR PËR FOTOT
 
 dotenv.config();
 
@@ -32,6 +34,11 @@ if (!process.env.MONGO_URI) {
 app.use('/api/users', userRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes); 
+app.use('/api/upload', uploadRoutes); // SHTUAR PËR FOTOT
+
+// SHTUAR PËR FOTOT: E bëjmë folderin 'uploads' të lexueshëm nga interneti
+const __dirname = path.resolve();
+app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 app.get('/', (req, res) => {
     res.send('Serveri dhe Databaza janë gati! 🚀 (Versioni Live)');
