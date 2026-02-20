@@ -26,7 +26,6 @@ router.post('/', protect, async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // Llogaritja e pikëve: 100 L = 1 pikë
         const pointsEarned = Math.floor(totalPrice / 100);
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id, 
@@ -70,7 +69,6 @@ router.get('/', protect, admin, async (req, res) => {
 // @access  Private/Admin
 router.put('/:id/status', protect, admin, async (req, res) => {
     try {
-        // 1. Debugging: Shiko në terminalin e Backend-it ID-në që vjen
         console.log("Duke përditësuar porosinë ID:", req.params.id);
         console.log("Statusi i ri:", req.body.status);
 
@@ -79,10 +77,11 @@ router.put('/:id/status', protect, admin, async (req, res) => {
         if (order) {
             order.status = req.body.status || order.status;
             
-            // Kontrollojmë nëse statusi është një nga ato që kërkojnë pagesë
-            if (order.status === 'Delivered' || order.status === 'Paguar') {
+            // Kontrollojmë nëse statusi i ri tregon që porosia u krye.
+            // Ndryshuam kushtin që të përputhet me fjalët shqip.
+            if (order.status === 'Porosia u dërgua') {
                 order.isPaid = true;
-                order.paidAt = Date.now(); // Mirë është ta kesh si rekord
+                order.paidAt = Date.now(); 
             }
 
             const updatedOrder = await order.save();
@@ -105,7 +104,7 @@ router.delete('/:id', protect, admin, async (req, res) => {
         const order = await Order.findById(req.params.id);
 
         if (order) {
-            await order.deleteOne(); // Fshin porosinë nga databaza përfundimisht
+            await order.deleteOne(); 
             res.json({ message: 'Porosia u fshi me sukses 🗑️' });
         } else {
             res.status(404).json({ message: 'Porosia nuk u gjet' });
