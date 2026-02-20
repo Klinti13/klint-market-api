@@ -65,27 +65,35 @@ router.get('/', protect, admin, async (req, res) => {
     }
 });
 
-// @desc    Përditëso statusin e porosisë (Pending -> Shipped -> Delivered)
+// @desc    Përditëso statusin e porosisë
 // @route   PUT /api/orders/:id/status
 // @access  Private/Admin
 router.put('/:id/status', protect, admin, async (req, res) => {
     try {
+        // 1. Debugging: Shiko në terminalin e Backend-it ID-në që vjen
+        console.log("Duke përditësuar porosinë ID:", req.params.id);
+        console.log("Statusi i ri:", req.body.status);
+
         const order = await Order.findById(req.params.id);
 
         if (order) {
             order.status = req.body.status || order.status;
             
+            // Kontrollojmë nëse statusi është një nga ato që kërkojnë pagesë
             if (order.status === 'Delivered' || order.status === 'Paguar') {
                 order.isPaid = true;
+                order.paidAt = Date.now(); // Mirë është ta kesh si rekord
             }
 
             const updatedOrder = await order.save();
             res.json(updatedOrder);
         } else {
+            console.log("❌ Porosia nuk u gjet në Databazë!");
             res.status(404).json({ message: 'Porosia nuk u gjet' });
         }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error("❌ Error te Status Update:", error.message);
+        res.status(500).json({ message: "Gabim i brendshëm i serverit: " + error.message });
     }
 });
 
