@@ -22,6 +22,7 @@ const orderSchema = new mongoose.Schema({
         required: true, 
         // KËTU U BË OPERACIONI: Shtova fjalët e sakta shqip, dhe lashë ato 
         // anglisht thjesht që të mos të fshihen porositë e vjetra që kishe bërë provë.
+        enum: ['Në Pritje', 'Porosia u mor', 'Porosia u dërgua', 'Pending', 'Shipped', 'Delivered', 'Paguar'], 
         default: 'Në Pritje' 
     },
     paymentMethod: { type: String, default: 'Cash on Delivery' }
