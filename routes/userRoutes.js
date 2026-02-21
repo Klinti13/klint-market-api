@@ -1,7 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
-import { protect } from '../middleware/authMiddleware.js'; // Na duhet për të mbrojtur profilin
+import { protect } from '../middleware/authMiddleware.js'; 
 
 const router = express.Router();
 
@@ -52,7 +52,7 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 isAdmin: user.isAdmin,
                 points: user.points,
-                address: user.address, // 👇 Dërgojmë adresën te Frontendi
+                address: user.address, 
                 city: user.city,
                 phone: user.phone,
                 token: generateToken(user._id)
@@ -67,6 +67,9 @@ router.post('/login', async (req, res) => {
 
 // 3. PËRDITËSO PROFILIN (Për të ruajtur adresën e re)
 router.put('/profile', protect, async (req, res) => {
+    console.log("--> Kërkesë për përditësim Profili e marrë për User ID:", req.user._id);
+    console.log("--> Të dhënat e ardhura:", req.body);
+    
     try {
         const user = await User.findById(req.user._id);
 
@@ -75,11 +78,11 @@ router.put('/profile', protect, async (req, res) => {
             user.city = req.body.city || user.city;
             user.phone = req.body.phone || user.phone;
             
-            // Nëse do të ndryshojë edhe emrin/passwordin në të ardhmen
             if (req.body.name) user.name = req.body.name;
             if (req.body.password) user.password = req.body.password;
 
             const updatedUser = await user.save();
+            console.log("--> Përditësimi u krye me sukses!");
 
             res.json({
                 _id: updatedUser._id,
@@ -87,15 +90,17 @@ router.put('/profile', protect, async (req, res) => {
                 email: updatedUser.email,
                 isAdmin: updatedUser.isAdmin,
                 points: updatedUser.points,
-                address: updatedUser.address, // 👇 Kthejmë adresën e përditësuar
+                address: updatedUser.address, 
                 city: updatedUser.city,
                 phone: updatedUser.phone,
-                token: generateToken(updatedUser._id) // E lëmë të logohet prapë
+                token: generateToken(updatedUser._id) 
             });
         } else {
+            console.log("--> Përdoruesi nuk u gjet në DB.");
             res.status(404).json({ message: "❌ Përdoruesi nuk u gjet" });
         }
     } catch (error) {
+        console.error("--> Gabim Serveri:", error.message);
         res.status(500).json({ message: "Gabim në server", error: error.message });
     }
 });
