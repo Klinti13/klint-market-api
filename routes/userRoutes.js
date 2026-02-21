@@ -13,6 +13,12 @@ const generateToken = (id) => {
 router.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
+
+        // 🛑 MURI I SIGURISË NË SERVER:
+        if (password.length < 8) {
+            return res.status(400).json({ message: "❌ Fjalëkalimi duhet të ketë të paktën 8 karaktere!" });
+        }
+
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(400).json({ message: "❌ Ky email është i regjistruar tashmë!" });
