@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 import { protect } from '../middleware/authMiddleware.js'; 
+import rateLimit from 'express-rate-limit'; // 🛡️ IMPORTUAM POLICIN E SIGURISË
 
 const router = express.Router();
 
@@ -9,12 +10,21 @@ const generateToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
+// 🛑 KRIJOJMË BLLOKUESIN PËR SULMET BRUTE-FORCE
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // Koha: 15 minuta
+    max: 5, // Limiti: 5 prova maksimale nga e njëjta IP
+    message: { message: "❌ Keni provuar shumë herë! Ju lutem prisni 15 minuta." },
+    standardHeaders: true, // Dërgon info për limitin në headers
+    legacyHeaders: false,
+});
+
 // 1. REGJISTRIMI
 router.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        // 🛑 MURI I SIGURISË NË SERVER:
+        // 🛑 MURI I SIGURISË 1: Fjalëkalimi minimalisht 8 shkronja
         if (password.length < 8) {
             return res.status(400).json({ message: "❌ Fjalëkalimi duhet të ketë të paktën 8 karaktere!" });
         }
@@ -45,8 +55,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// 2. LOGIN
-router.post('/login', async (req, res) => {
+// 2. LOGIN (🛡️ I SHTUAM POLICIN 'loginLimiter' KËTU)
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
@@ -71,11 +81,8 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// 3. PËRDITËSO PROFILIN (Për të ruajtur adresën e re)
+// 3. PËRDITËSO PROFILIN 
 router.put('/profile', protect, async (req, res) => {
-    console.log("--> Kërkesë për përditësim Profili e marrë për User ID:", req.user._id);
-    console.log("--> Të dhënat e ardhura:", req.body);
-    
     try {
         const user = await User.findById(req.user._id);
 
@@ -88,7 +95,6 @@ router.put('/profile', protect, async (req, res) => {
             if (req.body.password) user.password = req.body.password;
 
             const updatedUser = await user.save();
-            console.log("--> Përditësimi u krye me sukses!");
 
             res.json({
                 _id: updatedUser._id,
@@ -102,11 +108,9 @@ router.put('/profile', protect, async (req, res) => {
                 token: generateToken(updatedUser._id) 
             });
         } else {
-            console.log("--> Përdoruesi nuk u gjet në DB.");
             res.status(404).json({ message: "❌ Përdoruesi nuk u gjet" });
         }
     } catch (error) {
-        console.error("--> Gabim Serveri:", error.message);
         res.status(500).json({ message: "Gabim në server", error: error.message });
     }
 });
