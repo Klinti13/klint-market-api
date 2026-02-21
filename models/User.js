@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
-    // MAGJIA KËTU: Fjala 'return' e ndalon serverin të prishë fjalëkalimin!
+    // 🛑 MAGJIA: Fjala 'return' e ndalon serverin të rrëzohet!
     if (!this.isModified('password')) {
         return next(); 
     }
