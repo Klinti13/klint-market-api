@@ -24,9 +24,17 @@ router.post('/register', async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        // 🛑 MURI I SIGURISË 1: Fjalëkalimi minimalisht 8 shkronja
+        // 🛑 MURI I SIGURISË 1: Gjatësia
         if (password.length < 8) {
             return res.status(400).json({ message: "❌ Fjalëkalimi duhet të ketë të paktën 8 karaktere!" });
+        }
+
+        // 🛑 MURI I SIGURISË 2: Shkronjë + Numër
+        const hasLetter = /[a-zA-Z]/.test(password);
+        const hasNumber = /\d/.test(password);
+        
+        if (!hasLetter || !hasNumber) {
+            return res.status(400).json({ message: "❌ Fjalëkalimi duhet të përmbajë të paktën 1 shkronjë dhe 1 numër!" });
         }
 
         const userExists = await User.findOne({ email });
@@ -54,7 +62,6 @@ router.post('/register', async (req, res) => {
         res.status(500).json({ message: "Gabim në server", error: error.message });
     }
 });
-
 // 2. LOGIN (🛡️ I SHTUAM POLICIN 'loginLimiter' KËTU)
 router.post('/login', loginLimiter, async (req, res) => {
     try {
