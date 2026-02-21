@@ -14,10 +14,11 @@ const userSchema = new mongoose.Schema({
     phone: { type: String, default: '' }
 }, { timestamps: true });
 
-userSchema.pre('save', async function (next) {
-    // 🛑 MAGJIA: Fjala 'return' e ndalon serverin të rrëzohet!
+// 🛑 MAGJIA KËTU: E hoqëm fare fjalën "next" nga kllapat.
+userSchema.pre('save', async function () {
+    // Nëse po ndryshojmë adresën (dhe jo fjalëkalimin), thjesht jepi 'return' dhe ndalo!
     if (!this.isModified('password')) {
-        return next(); 
+        return; 
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
